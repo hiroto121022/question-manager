@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+{% load static %}
+{% load quiz_extra %}
+<html>
+<head>
+    <title>問題演習ページ</title>
+    <link rel="stylesheet" href="{% static 'css/answer.css' %}">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+  <section class="question-nav">
+    <div class="question-nav__number">演習中 {{ context.current_index }} / {{ context.question_pks_count }} 問目</div>
+  </section>
+  <div class="question-wrapper">
+    <div id="top" class="header">
+      <!-- 問題番号 -->
+      <span>{% for year in context.question.questioninstance_set.all|dictsort:"year_id" %}{{ year.year }}-{{ year.question_number }}{% if not forloop.last %}, {% endif %}{% endfor %}</span>
+    </div>
+    <div class="question-main">
+      <!-- 問題文 -->
+      <div class="question-content">
+        <div clsss="body">
+        <p>{{ context.question.question_text }}</p>
+        </div>
+        <div class="images">
+          <div class="figure">
+            {% if context.question.question_image %}
+              <img src="{{ context.question.question_image.url }}" alt="Question Image">
+            {% endif %}
+          </div>
+        </div>
+        <div class="multiple-answer-options">
+        <!-- 選択肢のラジオボタン + ラベル -->
+        {% for choice in context.choices %}
+          <input type="checkbox" id="choice{{ choice.id }}" value="{{ choice.id }}" data-correct="{{ choice.isCorrect }}"/>
+          <label for="choice{{ choice.id }}" class="label">{{ forloop.counter0|chr }}. {{ choice.choice_text|safe }}</label>
+        {% endfor %}
+        </div>
+      </div>
+      <!-- 回答する / 次へ / 終了 ボタン -->
+      <div id="answerCbtSection">
+        <button type="button" id="showExplanationButton" class="answer-item">解答を確認</button>
+      </div>
+    </div>
+  </div>
+  <!-- 正解 or 不正解の表示 -->
+  <div id="ResultColumn" class="explanation">
+  <div class="questionResult">
+    <div class="resultContent">
+      <span class="ansCorrect" style="color: blue;"><span style="color: #000;">解答： </span>{{ "〇" }}</span>
+      <span class="ansnCorrect" style="color: red;"><span style="color: #000;">解答： </span>{{ "×" }}</span>
+      <p>正解：
+        {% for choice in context.choices %}
+          {% if choice.isCorrect == True %}
+            {{ forloop.counter0|chr }}
+          {% endif %}
+        {% endfor %}
+      </p>
+    </div>
+  </div>
+  <div class="desc">
+    <div class="desc--title"> 解説 </div>
+    <div class="desc--main">
+      <div class="descContent">
+        <div class="descContent--title"> 解法の要点 </div>
+        <div class="descContent--detail">
+          <div >{{ context.question.explanation }}</div>
+          </div>
+        </div>
+      <div class="descContent">
+        <div class="descContent--title"> 選択肢解説 </div>
+        <div class="descContent--detail">
+          <div class="desc--contentMultipleDetail">
+              {% for choice in context.choices %}
+
+                  <p>{{ forloop.counter0|chr }}. {% if choice.explanation_text != "" and choice.explanation_text != None %}{{ choice.explanation_text }}{% endif %}</p>
+
+              {% endfor %}
+          </div>
+        </div>
+      </div>
+      <div class="descContent">
+        <div class="descContent--title"> 分野・詳細 </div>
+        <div class="descContent--detail">
+          <span>{{ context.question.subject }} - {{ context.question.field }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <form method="post">
+  <button name='next_question' class="answer-item">次へ</button>
+  </form>
+</div>
+
+    <script>
+        // 解答を確認ボタンがクリックされたら解答部分を表示
+        document.getElementById("showExplanationButton").addEventListener("click", function() {
+            document.querySelector(".explanation").style.display = "block";
+            const el = document.querySelector('#ResultColumn');
+            setTimeout(() => el.scrollIntoView({ behavior: 'smooth'}) ,200);
+            document.querySelector(".multiple-answer-options").style.display = "block";
+            const inputElements = document.querySelectorAll('.multiple-answer-options input');
+            // 各 input 要素に対して disabled 属性を設
+            inputElements.forEach(function(inputElement) {
+              inputElement.disabled = true;
+            });
+        });
+        document.getElementById("showExplanationButton").addEventListener("click", function() {
+          const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+          let isCorrect = true; // デフォルトでは正しいと仮定
+
+          checkboxes.forEach(function(checkbox) {
+            const correct = checkbox.getAttribute('data-correct');
+            const label = checkbox.nextElementSibling; // 隣の label 要素を取得
+
+            if (correct == "True") {
+              label.classList.add('label-correct');
+            } else if (correct == "False") {
+            }
+          });
+
+          checkboxes.forEach(function(checkbox) {
+            const correct = checkbox.getAttribute('data-correct');
+            const isChecked = checkbox.checked;
+
+            if (correct=="True" && !isChecked) {
+              isCorrect = false;
+            } else if (correct=="False" && isChecked) {
+              isCorrect = false; // 不正解でチェックされている場合、不正解とする
+            }
+          });
+
+          if (isCorrect) {
+            document.querySelector(".ansCorrect").style.display = "block";
+            document.querySelector(".ansnCorrect").style.display = "none";
+          } else {
+            document.querySelector(".ansCorrect").style.display = "none";
+            document.querySelector(".ansnCorrect").style.display = "block";
+          }
+        });
+    </script>
+</body>
+</html>

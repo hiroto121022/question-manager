@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Word文書アップロード</title>
+</head>
+<body>
+    <h2>Word文書をアップロードして内容を抽出</h2>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <table>
+          <tr>
+            <!-- 科目 -->
+            <td class="right"><label for="{{ form.subject.id_for_label }}">科目</label></td>
+            <td>{{ form.subject }}</td>
+          </tr>
+          <tr>
+            <!-- 年度 -->
+            <td class="right"><label for="{{ form.subject.id_for_label }}">年度</label></td>
+            <td>{{ form.year }}</td>
+          </tr>
+        </table>
+        <input type="file" name="docx_file" accept=".docx" required>
+        <br>
+        <input type="submit" value="アップロード">
+    </form>
+</body>
+</html>

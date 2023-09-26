@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% load static %}
+{% load quiz_extra %}
+{% block head %}
+    <title>教科を選ぶ</title>
+{% endblock %}
+{% block content %}
+<main>
+  <section class="pt-5 text-center container">
+    <div class="row pt-lg-5">
+      <div class="col-lg-12 col-md-12 mx-auto">
+        <h1 class="fw-light pb-3">教科一覧</h1>
+      </div>
+    </div>
+  </section>
+  <div class="container px-4 py-5" id="icon-grid">
+    <h2 class="pb-2 border-bottom">3年生</h2>
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4 py-5">
+      {% for subject in grade_3_subjects %}
+          <div class="col d-flex align-items-start">
+            <div>
+              <a href="{% url 'subject_detail' subject_id=subject.pk %}" class="btn text-dark btn-lg btn-light fw-bold border-dark bg-Light">{{ subject.name }}</a>
+            </div>
+          </div>
+      {% endfor %}
+    </div>
+    <h2 class="pb-2 border-bottom">4年生</h2>
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4 py-5">
+      {% for subject in grade_4_subjects %}
+          <div class="col d-flex align-items-start">
+            <div>
+              <a href="{% url 'subject_detail' subject_id=subject.pk %}" class="btn text-dark btn-lg btn-light fw-bold border-dark bg-Light">{{ subject.name }}</a>
+            </div>
+          </div>
+      {% endfor %}
+    </div>
+  </div>
+</main>
+<script src="../assets/dist/js/bootstrap.bundle.min.js"></script>
+{% endblock %}

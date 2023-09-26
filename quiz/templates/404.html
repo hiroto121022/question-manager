@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% load static %}
+{% block head %}
+    <title>ページはありません</title>
+{% endblock %}
+{% block content %}
+<main>
+  <section class="pt-5 text-center container">
+    <div class="row pt-lg-5">
+      <div class="col-lg-6 col-md-8 mx-auto">
+        <h1 class="fw-light pb-3">このページはありません</h1>
+        <p>
+          <a href="{% url 'index' %}" class="btn btn-primary">ホームに戻る</a>
+        </p>
+      </div>
+    </div>
+  </section>
+</main>
+<script src="../assets/dist/js/bootstrap.bundle.min.js"></script>
+{% endblock %}

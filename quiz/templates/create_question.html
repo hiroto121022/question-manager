@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+{% load static %}
+{% load quiz_extra %}
+{% block content %}
+<!-- create_question.html -->
+<form method="post" id="quiz-form" enctype="multipart/form-data">
+  {% csrf_token %}
+
+  {{ form.as_p }}
+
+  <fieldset id="choices">
+    <legend>Choices</legend>
+    <div class="formset" id="choices-formset">
+      {{ choice_formset.management_form }}
+      {% for choice_form in choice_formset %}
+        <li style="list-style:none;" id="choice-set-{{ forloop.counter0 }}">{{ choice_form.as_p }}</li>
+      {% endfor %}
+    </div>
+    <button type="button" id="add-choice" data-formset="choices-formset">Add Choice</button>
+    <button type="button" id="delete-choice" data-formset="choices-formset">Delete Choice</button>
+  </fieldset>
+
+  <fieldset id="questions">
+    <legend>Questions</legend>
+    <div class="formset" id="questions-formset">
+      {{ question_formset.management_form }}
+      {% for question_form in question_formset %}
+        <li style="list-style:none;" id="year-set-{{ forloop.counter0 }}">{{ question_form.as_table }}</li>
+      {% endfor %}
+    </div>
+    <button type="button" id="add-question" data-formset="questions-formset">Add Question</button>
+    <button type="button" id="delete-year" data-formset="questions-formset">Delete Question</button>
+  </fieldset>
+
+  <input type="submit" value="Save">
+</form>
+
+<script>
+  $(function(){
+      var totalManageChoiceElement = $('input#id_choice-TOTAL_FORMS');
+      var totalManageQuestionElement = $('input#id_question-TOTAL_FORMS');
+      var currentChoiceCount = parseInt(totalManageChoiceElement.val());
+      var currentQuestionCount = parseInt(totalManageQuestionElement.val());
+
+      $('button#add-choice').on('click', function(){
+          var choiceItem = $('<li>', {
+              id: 'choice-set-' + currentChoiceCount,
+              style: "list-style:none;",
+          });
+          var choiceLabel = $('<label>', {
+              for: 'id_choice-' + currentChoiceCount + '-choice_text',
+              text: 'Choice text:',
+          });
+          var choiceElement = $('<input>', {
+              type: 'text',
+              name: 'choice-' + currentChoiceCount + '-choice_text',
+              id: 'id_choice-' + currentChoiceCount + '-choice_text',
+          });
+          var explanationLabel = $('<label>', {
+              for: 'id_choice-' + currentChoiceCount + '-explanation_text',
+              text: 'Explanation text:',
+          });
+          var explanationElement = $('<input>', {
+              type: 'text',
+              name: 'choice-' + currentChoiceCount + '-explanation_text',
+              id: 'id_choice-' + currentChoiceCount + '-explanation_text',
+          });
+          var correctLabel = $('<label>', {
+              for: 'id_choice-' + currentChoiceCount + '-isCorrect',
+              text: 'IsCorrect:',
+          });
+          var correctElement = $('<input>', {
+              type: 'checkbox',
+              name: 'choice-' + currentChoiceCount + '-isCorrect',
+              id: 'id_choice-' + currentChoiceCount + '-isCorrect',
+          });
+          choiceItem.append(choiceLabel);
+          choiceItem.append(choiceElement);
+          choiceItem.append(explanationLabel);
+          choiceItem.append(explanationElement);
+          choiceItem.append(correctLabel);
+          choiceItem.append(correctElement);
+          $('div#choices-formset').append(choiceItem);
+          currentChoiceCount += 1;
+          totalManageChoiceElement.attr('value', currentChoiceCount);
+      });
+
+      $('button#delete-choice').on('click', function(){
+          if (currentChoiceCount > 1) {
+            var lastChoiceIndex = currentChoiceCount - 1;
+            $('li#choice-set-' + lastChoiceIndex).remove();
+            // フォームセット数を減少
+            currentChoiceCount -= 1;
+            totalManageChoiceElement.val(currentChoiceCount);
+        } else {
+            alert("最低1つの選択肢が必要です。"); // 1つの選択肢が必要な場合、アラートを表示するなどの処理を追加
+        }
+      });
+
+      $('button#delete-year').on('click', function(){
+          if (currentQuestionCount > 1) {
+            var lastQuestionIndex = currentQuestionCount - 1;
+            $('li#year-set-' + lastQuestionIndex).remove();
+            // フォームセット数を減少
+            currentQuestionCount -= 1;
+            totalManageQuestionElement.val(currentQuestionCount);
+        } else {
+            alert("最低1つの年度が必要です。"); // 1つの選択肢が必要な場合、アラートを表示するなどの処理を追加
+        }
+      });
+
+      $('button#add-question').on('click', function(){
+          var yearItem = $('<li>', {
+              id: 'year-set-' + currentQuestionCount,
+              style: "list-style:none;",
+          });
+          var yearLabel = $('<label>', {
+              for: 'id_question-' + currentQuestionCount + '-year',
+              text: 'Year:',
+          });
+
+          // 年の選択肢を取得してドロップダウンメニューに追加する関数
+          function addYearsToDropdown() {
+              $.ajax({
+                  url: '/get_years/',  // get_yearsビューのURLに合わせて変更
+                  method: 'GET',
+                  dataType: 'json',
+                  success: function(data) {
+                      var yearElement = $('<select>', {
+                          name: 'question-' + (currentQuestionCount -1) + '-year',
+                          id: 'id_question-' + (currentQuestionCount -1) + '-year',
+                      });
+
+                      // 取得した年のリストをドロップダウンメニューに追加
+                      $.each(data.years, function(index, year) {
+                          var optionElement = $('<option>', {
+                              value: year.id,
+                              text: year.year,
+                          });
+                          yearElement.append(optionElement);
+                      });
+
+                      var numberLabel = $('<label>', {
+                          for: 'id_question-' + (currentQuestionCount -1) + '-year',  // 問題ごとにユニークなIDを設定
+                          text: 'Question_number:',
+                      });
+                      var numberElement = $('<input>', {
+                          type: 'number',
+                          name: 'question-' + (currentQuestionCount -1) + '-question_number',  // 問題ごとにユニークな名前を設定
+                          id: 'id_question-' + (currentQuestionCount -1) + '-question_number',
+                      });
+
+                      yearItem.append(yearLabel);
+                      yearItem.append(yearElement);
+                      yearItem.append(numberLabel);
+                      yearItem.append(numberElement);
+                      $('div#questions-formset').append(yearItem);
+                  },
+                  error: function() {
+                      console.error('Failed to fetch years.');
+                  }
+              });
+          }
+
+          // 年の選択肢をドロップダウンメニューに追加
+          addYearsToDropdown();
+
+          currentQuestionCount += 1;
+          totalManageQuestionElement.attr('value', currentQuestionCount);
+      });
+  });
+</script>
+
+{% endblock %}
