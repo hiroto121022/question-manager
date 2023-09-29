@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+{% extends "base.html" %}
+{% load quiz_extra %}
+{% load static %}
+{% block head %}
+<title>{{ subject.name }}の{{ year.year }}年度の問題</title>
+<link rel="stylesheet" href="{% static 'css/list-groups.css' %}">
+{% endblock %}
+{% block content %}
+<main>
+  <section class="pt-5 text-center container">
+    <div class="row pt-lg-5">
+      <div class="col-lg-12 col-md-12 mx-auto">
+        <h1 class="fw-light pb-3">{{ subject.name }}の{{ year.year }}年度の問題</h1>
+      </div>
+    </div>
+  </section>
+  <div class="d-flex mb-3 justify-content-center">
+    <div class="list-group" style="max-width: 90%;!important">
+        {% for question_instance in question_instances %}
+        <div>
+          <a href="{% url 'update_question' question_instance.question.pk %}?next={{ request.get_full_path }}" class="list-group-item list-group-item-action d-flex gap-3 py-3" aria-current="true">編集</a>
+          <div>{{ question_instance.question_number }}. {{ question_instance.question.question_text }}({% for ye in question_instance.question.questioninstance_set.all|dictsort:"year_id" %}{{ ye.year }}-{{ ye.question_number }}{% if not forloop.last %}, {% endif %}{% endfor %})</div>
+          {% if question_instance.question.question_image %}
+          <img src="{{ question_instance.question.question_image.url }}" alt="Question Image" style="cursor: pointer; max-width: 200px; margin-top: 10px;">
+          {% endif %}
+          <ul style="list-style: none; padding-left:0px;!important">
+            {% for choice in question_instance.question.choiceexplanation_set.all %}
+              <li>{{ forloop.counter0|chr }}. {{ choice.choice_text }}</li>
+            {% endfor %}
+          </ul>
+          <div style="text-align: right;">答.
+            {% for choice in question_instance.question.choiceexplanation_set.all %}
+              {% if choice.isCorrect == True %}
+                {{ forloop.counter0|chr }}
+              {% endif %}
+            {% empty %}
+            {% endfor %}
+          </div>
+          <div style="text-align: right;">{% if question_instance.question.explanation != "" and question_instance.question.explanation != None %}{{ question_instance.question.explanation }}{% endif %}</div>
+          <div style="text-align: right;">
+            {% for choice in question_instance.question.choiceexplanation_set.all %}
+              {% if choice.explanation_text != "" and choice.explanation_text != None %}
+                {{ forloop.counter0|chr }}. {{ choice.explanation_text }}
+              {% endif %}
+            {% endfor %}
+          </div>
+          <div style="text-align: right;">{{ question_instance.question.field }}</div>
+        </div><br>
+        {% empty %}
+        <p>問題がありません</p>
+        {% endfor %}
+    </div>
+  </div>
+</main>
+<script src="../assets/dist/js/bootstrap.bundle.min.js"></script>
+<script type="text/javascript">
+// ページを離れる前にスクロール位置を保存
+window.addEventListener('beforeunload', function() {
+  localStorage.setItem('scrollPosition', window.scrollY);
+});
+
+// ページに戻ったときにスクロール位置を復元
+window.addEventListener('load', function() {
+  var scrollPosition = localStorage.getItem('scrollPosition');
+  if (scrollPosition) {
+    window.scrollTo(0, scrollPosition);
+  }
+});
+</script>
+{% endblock %}

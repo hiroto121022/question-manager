@@ -46,7 +46,7 @@ class Year(SortableMixin):
 
 class QuizQuestion(SortableMixin):
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
-    field = SortableForeignKey(Field, on_delete=models.CASCADE)
+    field = SortableForeignKey(Field, on_delete=models.CASCADE, null=True, blank=True)
     question_text = models.CharField(max_length=255)
     the_order = models.PositiveIntegerField(default=0, editable=False, db_index=True) # 追加する
 
@@ -71,7 +71,7 @@ class ChoiceExplanation(SortableMixin):
         ordering = ["the_order"]
 
     def __str__(self):
-        return f"Choice: {self.choice_text} for {self.question}"
+        return f"問題:{self.question} 選択肢:{self.choice_text}"
 
 class QuestionInstance(SortableMixin):
     question = SortableForeignKey(QuizQuestion, on_delete=models.CASCADE)

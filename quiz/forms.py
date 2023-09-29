@@ -34,5 +34,4 @@ QuestionInstanceFormSet2 = modelformset_factory(QuestionInstance, form=QuestionI
 
 class ContentUploadForm(forms.Form):
     subject = forms.ModelChoiceField(queryset=Subject.objects.all(), label='Subject')
-    year = forms.ModelChoiceField(queryset=Year.objects.all(), label='Year')
     docx_file = forms.FileField(label='Upload DOCX File')

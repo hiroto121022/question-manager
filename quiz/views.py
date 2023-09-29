@@ -5,6 +5,8 @@ from .models import QuizQuestion, ChoiceExplanation, QuestionInstance, Year, Sub
 from django.http import JsonResponse
 from docx import Document as DocxDocument
 from django.urls import reverse, reverse_lazy
+from django.contrib.auth.decorators import login_required
+import re
 
 def index(request):
     subjects = Subject.objects.all()
@@ -41,6 +43,33 @@ def year_questions(request, subject_id, year_id):
 
     return render(request, 'year_questions.html', {'subject': subject, 'year': year, 'question_instances': question_instances})
 
+def edit_subject_list(request):
+    grade_3_subjects = Subject.objects.filter(grade_id=1)
+    grade_4_subjects = Subject.objects.filter(grade_id=2)
+    return render(request, 'edit_subject_list.html', {'grade_3_subjects': grade_3_subjects, 'grade_4_subjects': grade_4_subjects})
+
+def edit_subject_detail(request, subject_id):
+    subject = get_object_or_404(Subject, pk=subject_id)
+    fields = Field.objects.filter(subject=subject)
+    years = Year.objects.filter(questioninstance__question__subject=subject).distinct()
+
+    return render(request, 'edit_subject_detail.html', {'subject': subject, 'fields': fields, 'years': years})
+
+def edit_field_questions(request, field_id):
+    field = get_object_or_404(Field, pk=field_id)
+    questions = QuizQuestion.objects.filter(field=field)
+
+    return render(request, 'edit_field_questions.html', {'field': field, 'questions': questions})
+
+def edit_year_questions(request, subject_id, year_id):
+    subject = get_object_or_404(Subject, pk=subject_id)
+    year = get_object_or_404(Year, pk=year_id)
+
+    # QuestionInstance モデルを介して問題番号を取得
+    question_instances = QuestionInstance.objects.filter(year=year, question__subject=subject).order_by('question_number')
+
+    return render(request, 'edit_year_questions.html', {'subject': subject, 'year': year, 'question_instances': question_instances})
+'''
 def create_question(request):
     years = Year.objects.all()
 
@@ -104,6 +133,7 @@ def create_question(request):
         form = QuizQuestionForm()
 
     return render(request, 'create_question.html', {'form': form, 'years': years})
+'''
 
 class QuizQuestionCreateView(CreateView):
     model = QuizQuestion
@@ -236,75 +266,95 @@ def extract_and_store_content(request):
     if request.method == 'POST':
         form = ContentUploadForm(request.POST, request.FILES)
         if form.is_valid():
+            # フォームが有効な場合、ファイルを処理します
+            subject = form.cleaned_data['subject']
             docx_file = request.FILES['docx_file']
+
             doc = DocxDocument(docx_file)
 
             current_question_text = None
-            current_choice_text = []
-            current_question_number = 0
-
-            # フォームから選択された subject と year の値を取得
-            subject = form.cleaned_data['subject']
-            year = form.cleaned_data['year']
+            current_choices = []
+            current_years_and_numbers = []
+            current_answer_indices = []  # 複数の答えを格納するリスト
 
             for paragraph in doc.paragraphs:
-                # レベル1の行を見つけたら、前のデータを保存して新しいデータを開始します
-                if paragraph.style.name.startswith('Heading 1'):
-                    if current_question_text and current_choice_text:
+                text = paragraph.text.strip()
+
+                if paragraph.style.name.startswith("Heading 1"):
+                    if current_question_text and current_choices:
                         # QuizQuestionモデルに保存
                         question = QuizQuestion.objects.create(
                             subject=subject,
-                            question_text=current_question_text,
+                            question_text=current_question_text
                         )
 
                         # ChoiceExplanationモデルに選択肢と説明を保存
-                        for choice_text in current_choice_text:
+                        for index, choice_text in enumerate(current_choices):
+                            is_correct = index in current_answer_indices  # 正解選択肢を設定
                             ChoiceExplanation.objects.create(
                                 question=question,
-                                choice_text=choice_text
+                                choice_text=choice_text,
+                                isCorrect=is_correct
                             )
 
-                        current_question_number += 1
+                        # QuestionInstanceモデルに関連するデータを保存
+                        for year, question_number in current_years_and_numbers:
+                            year_instance = Year.objects.get(year=year)
+                            QuestionInstance.objects.create(
+                                question=question,
+                                year=year_instance,
+                                question_number=question_number
+                            )
 
-                        QuestionInstance.objects.create(
-                            question=question,
-                            year=year,
-                            question_number=current_question_number
-                        )
+                    # レベル1の行から問題文と年度-問題番号情報を取得
+                    match = re.search(r'^(.*?)\((.*?)\)$', text)
+                    if match:
+                        current_question_text = match.group(1).strip()  # 問題文を取得
+                        years_and_numbers = match.group(2).split(',')  # 年度-問題番号情報をカンマで分割
+                        current_years_and_numbers = [(year.strip(), number.strip()) for year, number in (pair.split('-') for pair in years_and_numbers)]
 
-                    current_question_text = paragraph.text
-                    current_choice_text = []
-                else:
-                    # レベル1の行ではない場合、選択肢と説明を追加します
-                    current_choice_text.append(paragraph.text)
+                    current_choices = []
+                    current_answer_indices = []
 
-            # ループが終了した後、最後のデータを保存します
-            if current_question_text and current_choice_text:
+                elif paragraph.style.name.startswith("Heading 2"):
+                    # "レベル2" の行は答えを表します
+                    answer_text = text.replace("答.", "").strip()
+                    # 複数の答えをカンマで区切って処理
+                    current_answer_indices = [ord(answer) - ord('a') for answer in answer_text.split(',') if answer]
+
+                elif text:
+                    # 選択肢の行を処理します
+                    # 段落の先頭にある a.、b.、c.、d.、e. を取り除いて選択肢のテキストを抽出
+                    choice_text = re.sub(r'^[a-eA-E]\.', '', text).strip()
+                    current_choices.append(choice_text)
+
+            # ドキュメントの終了時に最後のデータを保存します
+            if current_question_text and current_choices:
                 question = QuizQuestion.objects.create(
                     subject=subject,
-                    question_text=current_question_text,
+                    question_text=current_question_text
                 )
 
-                for choice_text in current_choice_text:
+                for index, choice_text in enumerate(current_choices):
+                    is_correct = index in current_answer_indices  # 正解選択肢を設定
                     ChoiceExplanation.objects.create(
                         question=question,
-                        choice_text=choice_text
+                        choice_text=choice_text,
+                        isCorrect=is_correct
                     )
 
-                current_question_number += 1
-
-            # QuestionInstanceモデルに年と関連するデータを保存
-            QuestionInstance.objects.create(
-                question=question,
-                year=year,
-                question_number=current_question_number
-            )
-
+                for year, question_number in current_years_and_numbers:
+                    year_instance = Year.objects.get(year=year)
+                    QuestionInstance.objects.create(
+                        question=question,
+                        year=year_instance,
+                        question_number=question_number
+                    )
             return redirect('upload_document')  # 成功ページにリダイレクト
     else:
         form = ContentUploadForm()
 
-    return render(request, 'upload_form.html', {'form': form})
+    return render(request, 'upload_form.html', {'form': form, 'subjects': Subject.objects.all()})
 
 def start_question(request, subject_id):
     # Get the subject based on subject_id
