@@ -31,6 +31,8 @@ def subject_detail(request, subject_id):
 def field_questions(request, field_id):
     field = get_object_or_404(Field, pk=field_id)
     questions = QuizQuestion.objects.filter(field=field)
+    for question in questions:
+        question.correct_choices = [chr(i + 97) for i, choice in enumerate(question.choiceexplanation_set.all()) if choice.isCorrect]
 
     return render(request, 'field_questions.html', {'field': field, 'questions': questions})
 
@@ -40,6 +42,8 @@ def year_questions(request, subject_id, year_id):
 
     # QuestionInstance モデルを介して問題番号を取得
     question_instances = QuestionInstance.objects.filter(year=year, question__subject=subject).order_by('question_number')
+    for question_instance in question_instances:
+        question_instance.question.correct_choices = [chr(i + 97) for i, choice in enumerate(question_instance.question.choiceexplanation_set.all()) if choice.isCorrect]
 
     return render(request, 'year_questions.html', {'subject': subject, 'year': year, 'question_instances': question_instances})
 
@@ -231,6 +235,8 @@ def answer_question(request, question_id):
         # question_idがリストにある場合、その質問を取得
         question = get_object_or_404(QuizQuestion, pk=question_id)
         choices = ChoiceExplanation.objects.filter(question=question).order_by("?")
+        correct_choices = [chr(i + 97) for i, choice in enumerate(choices) if choice.isCorrect]
+
         # 次の質問のpkを取得（存在しない場合はNone）
         if request.method == 'POST':
             # ユーザーが「次の問題へ行く」ボタンをクリックした場合
@@ -251,6 +257,7 @@ def answer_question(request, question_id):
         context = {
             'question': question,
             'choices': choices,
+            'correct_choices': correct_choices,
             'question_pks_count': question_pks_count,
             'current_index': current_index,
         }
@@ -397,7 +404,7 @@ def start_question_year(request, subject_id, year_id):
     # QuestionInstance モデルを介して問題番号を取得
     subject = get_object_or_404(Subject, pk=subject_id)
     year = get_object_or_404(Year, pk=year_id)
-    questions = QuizQuestion.objects.filter(questioninstance__year=year, subject=subject)
+    questions = QuizQuestion.objects.filter(questioninstance__year=year, subject=subject).order_by('questioninstance__question_number')
 
     if questions.exists():
         question_ids = [question.id for question in questions]

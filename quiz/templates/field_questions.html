@@ -5,6 +5,9 @@
 {% block head %}
 <title>{{ field.name }}の問題</title>
 <link rel="stylesheet" href="{% static 'css/list-groups.css' %}">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.7.1/css/lightbox.css" rel="stylesheet">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.7.1/js/lightbox.min.js" type="text/javascript"></script>
 {% endblock %}
 {% block content %}
 <main>
@@ -24,20 +27,16 @@
       <div>
         <p>{{ question.question_text }}({% for year in question.questioninstance_set.all|dictsort:"year_id" %}{{ year.year }}-{{ year.question_number }}{% if not forloop.last %}, {% endif %}{% endfor %})</p>
         {% if question.question_image %}
-        <img src="{{ question.question_image.url }}" alt="Question Image" style="cursor: pointer; max-width: 200px; margin-top: 10px;">
+        <a href="{{ question.question_image.url }}" data-lightbox="image{{ forloop.counter }}">
+          <img src="{{ question.question_image.url }}" alt="Question Image" style="cursor: pointer; max-width: 300px; margin-top: 10px;">
+        </a>
         {% endif %}
         <ul style="list-style: none; padding-left:0px;!important">
           {% for choice in question.choiceexplanation_set.all %}
           <li>{{ forloop.counter0|chr }}. {{ choice.choice_text }}</li>
           {% endfor %}
         </ul>
-        <div style="text-align: right;">答.
-          {% for choice in question.choiceexplanation_set.all %}
-          {% if choice.isCorrect == True %}
-          {{ forloop.counter0|chr }}
-          {% endif %}
-          {% empty %}
-          {% endfor %}
+        <div style="text-align: right;">答. {{ question.correct_choices|join:"," }}
         </div>
         <div style="text-align: right;">{% if question.explanation != "" and question.explanation != None %}{{ question.explanation }}{% endif %}</div>
         <div style="text-align: right;">

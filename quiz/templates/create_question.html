@@ -5,6 +5,18 @@
 <!-- create_question.html -->
 <form method="post" id="quiz-form" enctype="multipart/form-data">
   {% csrf_token %}
+  <input type="submit" value="Save">
+  <fieldset id="questions">
+    <legend>Questions</legend>
+    <div class="formset" id="questions-formset">
+      {{ question_formset.management_form }}
+      {% for question_form in question_formset %}
+      <li style="list-style:none;" id="year-set-{{ forloop.counter0 }}">{{ question_form.as_table }}</li>
+      {% endfor %}
+    </div>
+    <button type="button" id="add-question" data-formset="questions-formset">Add Question</button>
+    <button type="button" id="delete-year" data-formset="questions-formset">Delete Question</button>
+  </fieldset>
 
   {{ form.as_p }}
 
@@ -20,17 +32,6 @@
     <button type="button" id="delete-choice" data-formset="choices-formset">Delete Choice</button>
   </fieldset>
 
-  <fieldset id="questions">
-    <legend>Questions</legend>
-    <div class="formset" id="questions-formset">
-      {{ question_formset.management_form }}
-      {% for question_form in question_formset %}
-        <li style="list-style:none;" id="year-set-{{ forloop.counter0 }}">{{ question_form.as_table }}</li>
-      {% endfor %}
-    </div>
-    <button type="button" id="add-question" data-formset="questions-formset">Add Question</button>
-    <button type="button" id="delete-year" data-formset="questions-formset">Delete Question</button>
-  </fieldset>
 
   <input type="submit" value="Save">
 </form>

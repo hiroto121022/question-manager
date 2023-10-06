@@ -47,18 +47,18 @@ class Year(SortableMixin):
 class QuizQuestion(SortableMixin):
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
     field = SortableForeignKey(Field, on_delete=models.CASCADE, null=True, blank=True)
-    question_text = models.CharField(max_length=255)
+    question_text = models.CharField(max_length=500)
     the_order = models.PositiveIntegerField(default=0, editable=False, db_index=True) # 追加する
 
     class Meta:
         ordering = ["the_order"]
 
-    def __str__(self):
-        return f"{self.subject}-{self.field}-{self.question_text}"
-
     question_image = models.ImageField(upload_to='question_images/', null=True, blank=True)
     explanation = models.CharField(max_length=255, null=True, blank=True)
     explanation_image = models.ImageField(upload_to='explanation_images/', null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.subject}-{self.field}-{self.explanation}-{self.question_text}"
 
 class ChoiceExplanation(SortableMixin):
     question = SortableForeignKey(QuizQuestion, on_delete=models.CASCADE)

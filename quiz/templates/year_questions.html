@@ -5,6 +5,9 @@
 {% block head %}
 <title>{{ subject.name }}の{{ year.year }}年度の問題</title>
 <link rel="stylesheet" href="{% static 'css/list-groups.css' %}">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.7.1/css/lightbox.css" rel="stylesheet">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.7.1/js/lightbox.min.js" type="text/javascript"></script>
 {% endblock %}
 {% block content %}
 <main>
@@ -24,20 +27,16 @@
         <div>
           <div>{{ question_instance.question_number }}. {{ question_instance.question.question_text }}({% for ye in question_instance.question.questioninstance_set.all|dictsort:"year_id" %}{{ ye.year }}-{{ ye.question_number }}{% if not forloop.last %}, {% endif %}{% endfor %})</div>
           {% if question_instance.question.question_image %}
-          <img src="{{ question_instance.question.question_image.url }}" alt="Question Image" style="cursor: pointer; max-width: 200px; margin-top: 10px;">
+          <a href="{{ question_instance.question.question_image.url }}" data-lightbox="image{{ question_instance.question_number }}">
+            <img src="{{ question_instance.question.question_image.url }}" alt="Question Image" style="cursor: pointer; max-width: 300px; margin-top: 10px;">
+          </a>
           {% endif %}
           <ul style="list-style: none; padding-left:0px;!important">
             {% for choice in question_instance.question.choiceexplanation_set.all %}
               <li>{{ forloop.counter0|chr }}. {{ choice.choice_text }}</li>
             {% endfor %}
           </ul>
-          <div style="text-align: right;">答.
-            {% for choice in question_instance.question.choiceexplanation_set.all %}
-              {% if choice.isCorrect == True %}
-                {{ forloop.counter0|chr }}
-              {% endif %}
-            {% empty %}
-            {% endfor %}
+          <div style="text-align: right;">答. {{ question_instance.question.correct_choices|join:"," }}
           </div>
           <div style="text-align: right;">{% if question_instance.question.explanation != "" and question_instance.question.explanation != None %}{{ question_instance.question.explanation }}{% endif %}</div>
           <div style="text-align: right;">

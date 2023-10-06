@@ -33,7 +33,7 @@
   </div>
   <div class="list-group justify-content-right">
     <h2 class="pb-2 border-bottom">年度一覧</h2>
-    {% for year in years %}
+    {% for year in years|dictsort:"year" %}
     <a href="{% url 'year_questions' subject_id=subject.id year_id=year.id %}" class="list-group-item list-group-item-action d-flex gap-3 py-3" aria-current="true">
       <img src="/static/img/pen.png" alt="twbs" width="32" height="32" class="flex-shrink-0">
       <div class="d-flex gap-2 w-100 justify-content-between">

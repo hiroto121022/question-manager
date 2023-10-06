@@ -41,6 +41,12 @@
       var currentChoiceCount = parseInt(totalManageChoiceElement.val());
       var currentQuestionCount = parseInt(totalManageQuestionElement.val());
 
+      $('select#id_subject').on('change', function() {
+          var selectedSubject = $(this).val();
+          // subjectが変更されたら、それをフォームのhiddenフィールドに設定
+          $('input#id_subject').val(selectedSubject);
+      });
+
       $('button#add-choice').on('click', function(){
           var choiceItem = $('<li>', {
               id: 'choice-set-' + currentChoiceCount,

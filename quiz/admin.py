@@ -3,9 +3,12 @@ from .models import Grade, Subject, Field, Year, ChoiceExplanation, QuizQuestion
 from adminsortable.admin import SortableAdmin
 
 admin.site.register(Grade)
-admin.site.register(Year)
 admin.site.register(ChoiceExplanation)
 admin.site.register(QuestionInstance)
+
+class YearAdmin(SortableAdmin):
+    list_display = ('id', 'year')
+    list_display_links = ('id', 'year')
 
 class SubjectAdmin(SortableAdmin):
     list_display = ('id', 'name', 'grade')
@@ -16,10 +19,10 @@ class FieldAdmin(SortableAdmin):
     list_display_links = ('id', 'name')
 
 class QuizQuestionAdmin(SortableAdmin):
-    list_display = ('id', 'question_text', 'field')
-    list_display_links = ('id', 'question_text')
+    list_display = ('the_order', 'question_text', 'field', 'explanation')
+    list_display_links = ('id', 'question_text', 'field')
 
-
+admin.site.register(Year, YearAdmin)
 admin.site.register(Subject, SubjectAdmin)
 admin.site.register(Field, FieldAdmin)
 admin.site.register(QuizQuestion, QuizQuestionAdmin)

@@ -1,6 +1,6 @@
 from django import forms
 from django.forms import formset_factory, modelformset_factory
-from .models import QuizQuestion, ChoiceExplanation, QuestionInstance, Subject, Year
+from .models import QuizQuestion, ChoiceExplanation, QuestionInstance, Subject, Year, Field
 
 class QuizQuestionForm(forms.ModelForm):
 
@@ -10,6 +10,13 @@ class QuizQuestionForm(forms.ModelForm):
     class Meta:
         model = QuizQuestion
         fields = '__all__'
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # subjectフィールドから選択された値を取得
+        selected_subject = self.initial.get('subject', None)
+        # 関連するFieldのクエリセットをフィルタリングして設定
+        self.fields['field'].queryset = Field.objects.filter(subject=selected_subject)
 
 class ChoiceExplanationForm(forms.ModelForm):
 
