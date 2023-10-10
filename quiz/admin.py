@@ -20,7 +20,7 @@ class FieldAdmin(SortableAdmin):
 
 class QuizQuestionAdmin(SortableAdmin):
     list_display = ('the_order', 'question_text', 'field', 'explanation')
-    list_display_links = ('id', 'question_text', 'field')
+    list_display_links = ('question_text', 'field')
 
 admin.site.register(Year, YearAdmin)
 admin.site.register(Subject, SubjectAdmin)

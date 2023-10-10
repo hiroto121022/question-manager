@@ -25,7 +25,7 @@
     <div class="list-group" style="max-width: 90%;!important">
         {% for question_instance in question_instances %}
         <div>
-          <div>{{ question_instance.question_number }}. {{ question_instance.question.question_text }}({% for ye in question_instance.question.questioninstance_set.all|dictsort:"year_id" %}{{ ye.year }}-{{ ye.question_number }}{% if not forloop.last %}, {% endif %}{% endfor %})</div>
+          <div>{{ question_instance.question_number }}. {{ question_instance.question.question_text | linebreaksbr }}({% for ye in question_instance.question.questioninstance_set.all|dictsort:"year_id" %}{{ ye.year }}-{{ ye.question_number }}{% if not forloop.last %}, {% endif %}{% endfor %})</div>
           {% if question_instance.question.question_image %}
           <a href="{{ question_instance.question.question_image.url }}" data-lightbox="image{{ question_instance.question_number }}">
             <img src="{{ question_instance.question.question_image.url }}" alt="Question Image" style="cursor: pointer; max-width: 300px; margin-top: 10px;">
@@ -40,11 +40,13 @@
           </div>
           <div style="text-align: right;">{% if question_instance.question.explanation != "" and question_instance.question.explanation != None %}{{ question_instance.question.explanation }}{% endif %}</div>
           <div style="text-align: right;">
+          <ul style="list-style: none; padding-left:0px;!important">
             {% for choice in question_instance.question.choiceexplanation_set.all %}
               {% if choice.explanation_text != "" and choice.explanation_text != None %}
-                {{ forloop.counter0|chr }}. {{ choice.explanation_text }}
+                <li>{{ forloop.counter0|chr }}. {{ choice.explanation_text }}</li>
               {% endif %}
             {% endfor %}
+          </ul>
           </div>
           <div style="text-align: right;">{{ question_instance.question.field }}</div>
         </div><br>

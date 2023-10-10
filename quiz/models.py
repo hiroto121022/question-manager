@@ -47,7 +47,7 @@ class Year(SortableMixin):
 class QuizQuestion(SortableMixin):
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
     field = SortableForeignKey(Field, on_delete=models.CASCADE, null=True, blank=True)
-    question_text = models.CharField(max_length=500)
+    question_text = models.CharField(max_length=1000)
     the_order = models.PositiveIntegerField(default=0, editable=False, db_index=True) # 追加する
 
     class Meta:
